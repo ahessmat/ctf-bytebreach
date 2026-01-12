@@ -1,0 +1,111 @@
+---
+layout: default
+refactor: true
+---
+
+{% include lang.html %}
+
+{% assign pinned = site.posts | where: 'pin', 'true' %}
+{% assign default = site.posts | where_exp: 'item', 'item.pin != true and item.hidden != true' %}
+
+{% assign posts = '' | split: '' %}
+
+<!-- Get pinned posts -->
+
+{% assign offset = paginator.page | minus: 1 | times: paginator.per_page %}
+{% assign pinned_num = pinned.size | minus: offset %}
+
+{% if pinned_num > 0 %}
+  {% for i in (offset..pinned.size) limit: pinned_num %}
+    {% assign posts = posts | push: pinned[i] %}
+  {% endfor %}
+{% else %}
+  {% assign pinned_num = 0 %}
+{% endif %}
+
+<!-- Get default posts -->
+
+{% assign default_beg = offset | minus: pinned.size %}
+
+{% if default_beg < 0 %}
+  {% assign default_beg = 0 %}
+{% endif %}
+
+{% assign default_num = paginator.posts | size | minus: pinned_num %}
+{% assign default_end = default_beg | plus: default_num | minus: 1 %}
+
+{% if default_num > 0 %}
+  {% for i in (default_beg..default_end) %}
+    {% assign posts = posts | push: default[i] %}
+  {% endfor %}
+{% endif %}
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-7N6MCCR29S"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-7N6MCCR29S');
+</script>
+
+<div class="flex-grow-1 px-xl-1">
+  <h2 class="mb-4">CTF Performance</h2>
+  <div class="table-responsive">
+    <table class="table table-hover table-borderless">
+      <thead>
+        <tr>
+          <th scope="col">Event</th>
+          <th scope="col">Place</th>
+          <th scope="col">Solves</th>
+          <th scope="col">Team</th>
+          <th scope="col">Tags</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for post in site.posts %}
+          {% if post.place or post.solves or post.team %}
+          <tr>
+            <td class="align-middle fw-bold">
+              <a href="{{ post.url | relative_url }}" class="text-decoration-none text-reset">{{ post.title }}</a>
+            </td>
+            <td class="align-middle">
+              {% if post.place == "Completed" %}
+                <span style="color: #28a745; font-weight: bold;">Completed</span>
+              {% elsif post.place and post.total %}
+                {% assign place_num = post.place | plus: 0 %}
+                {% assign total_num = post.total | plus: 0 %}
+                {% if total_num > 0 %}
+                  {% assign percent = place_num | times: 100 | divided_by: total_num %}
+                  {% if percent <= 10 %}
+                    <span style="color: #28a745; font-weight: bold;">{{ post.place }} out of {{ post.total }}</span>
+                  {% elsif percent >= 90 %}
+                    <span style="color: #dc3545; font-weight: bold;">{{ post.place }} out of {{ post.total }}</span>
+                  {% else %}
+                    {% assign hue_deduct = percent | times: 12 | divided_by: 10 %}
+                    {% assign hue = 120 | minus: hue_deduct %}
+                    <span style="color: hsl({{ hue }}, 90%, 35%); font-weight: bold;">{{ post.place }} out of {{ post.total }}</span>
+                  {% endif %}
+                {% else %}
+                  <span class="fw-bold">{{ post.place }} out of {{ post.total }}</span>
+                {% endif %}
+              {% else %}
+                <span class="fw-bold">{{ post.place }}</span>
+              {% endif %}
+            </td>
+            <td class="align-middle">{{ post.solves }}</td>
+            <td class="align-middle">{{ post.team }}</td>
+            <td class="align-middle" style="white-space: normal;">
+              {% for tag in post.tags %}
+                <span class="badge rounded-pill text-bg-secondary me-1">{{ tag }}</span>
+              {% endfor %}
+            </td>
+          </tr>
+          {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
